@@ -1,0 +1,172 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+using System.Data.SQLite;
+using Microsoft.Win32;
+
+namespace _4
+{
+    /// <summary>
+    /// Логика взаимодействия для MainWindow.xaml
+    /// </summary>
+    public partial class MainWindow : Window
+    {
+        public MainWindow()
+        {
+            InitializeComponent();
+       
+           
+            string db_name = "C:\\Users\\Admin\\Documents\\Ри-89\\4labprog\\base.db";
+            m_dbConnection = new SQLiteConnection("Data Source=" + db_name + ";Version=3;");
+            //открытие соединения с базой данных
+            m_dbConnection.Open();
+            refresh();
+          
+            
+        }
+
+     
+
+        public class CTest
+        {
+            public int id { get; set; }
+            public int math { get; set; }
+            public int phys { get; set; }
+            public string fio { get; set; }
+        }
+
+        public SQLiteConnection m_dbConnection;
+        public void cleartb()
+        {
+            tb1.Text = "";
+            tb2.Text = "";
+            tb3.Text = "";
+            tb4.Text = "";
+        }
+
+        public void refresh()
+        {
+            dataGrid.Items.Clear();
+            string sql = "SELECT * FROM info ORDER BY id";
+            SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+            SQLiteDataReader reader = command.ExecuteReader();
+        
+            while (reader.Read())
+            {
+                CTest data = new CTest
+                {
+                    id = int.Parse(reader["id"].ToString()),
+                    fio = reader["fio"].ToString(),
+                    phys = int.Parse(reader["phys"].ToString()),
+                    math = int.Parse(reader["math"].ToString())
+                };
+                    dataGrid.Items.Add(data);
+            }
+        }
+
+        private void button_Click(object sender, RoutedEventArgs e)//добавление
+        {
+            //формирование запроса на добавление данных в поля типа INTEGER и TEXT (" + tb1.Text + "," + tb2.Text + ","+ tb3.Text + "," + tb4.Text +")";  (  tb1.Text [,tb2.Text ,tb3.Text, tb4.Text])";
+            //обратите внимание, что в текстовое поле, данные добавляются в формате ‘data’
+            //string sql = "INSERT INTO info (id,fio,math,phys) VALUES (" + tb1.Text + "," + tb2.Text + "," + tb3.Text + "," + tb4.Text + ")";
+            //SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+            ////извлечение запроса
+            //command.ExecuteNonQuery();
+            try
+            {
+                string sql = "INSERT INTO info (id,fio,math,phys) VALUES (" + tb1.Text + ",'" + tb2.Text + "'," + tb3.Text + "," + tb4.Text + ")";
+                SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+                command.ExecuteNonQuery();
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("Вы не ввели данные");
+            }
+            cleartb();
+            refresh();
+        }
+
+        private void dataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            int ind = dataGrid.SelectedIndex;
+
+            if (ind > -1)
+            {
+                CTest strokaIzDatagrida = (CTest)dataGrid.SelectedItem;
+                tb1.Text = strokaIzDatagrida.id.ToString();
+                tb2.Text = strokaIzDatagrida.fio;
+                tb3.Text = strokaIzDatagrida.math.ToString();
+                tb4.Text = strokaIzDatagrida.phys.ToString();
+            }
+            
+            
+        }
+
+        private void button3_Click(object sender, RoutedEventArgs e)//открыть базу
+        {
+            OpenFileDialog dlg = new OpenFileDialog();
+            dlg.ShowDialog();
+            //имя базы данных
+            string db_name = dlg.FileName;
+            m_dbConnection = new SQLiteConnection("Data Source=" + db_name + ";Version=3;");
+            //открытие соединения с базой данных
+            m_dbConnection.Open();
+            refresh();
+           
+        }
+
+        private void button1_Click(object sender, RoutedEventArgs e)//кнопка удаления
+        {
+            try
+            { 
+            CTest test = (CTest)dataGrid.SelectedItem;
+            string sql = "DELETE FROM info WHERE id = " + test.id + "";
+            SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+            command.ExecuteNonQuery();
+             }
+            catch (Exception)
+            {
+                MessageBox.Show("Вы не выбрали строку для удаления");
+            }
+            cleartb();
+            refresh();
+        }
+
+        private void button2_Click(object sender, RoutedEventArgs e)//изменение
+        {
+            try
+            {
+                CTest test = (CTest)dataGrid.SelectedItem;
+                string sql = "UPDATE info SET fio = '" + tb2.Text + "', phys = " + tb3.Text + ", math = " + tb4.Text + " WHERE id =" + tb1.Text + "";
+                SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+
+        
+                command.ExecuteNonQuery();
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("Вы не выбрали строку для изменения");
+            }
+            cleartb();
+            refresh();
+        }
+
+        private void tb1_TextChanged(object sender, TextChangedEventArgs e)
+        {
+
+        }
+    }
+    
+}
+
